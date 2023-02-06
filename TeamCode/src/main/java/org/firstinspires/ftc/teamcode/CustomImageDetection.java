@@ -222,6 +222,7 @@ public class CustomImageDetection extends LinearOpMode {
             //claw2.setPosition(0.65);//grab cone
             lift.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
             lift.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+            lock.setPosition(0.4);
 
 
         }
@@ -233,8 +234,8 @@ public class CustomImageDetection extends LinearOpMode {
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         while (opModeIsActive()) {
             //grab cone
-            claw.setPosition(0.47);
-            claw2.setPosition(0.65);
+            claw.setPosition(0.0);
+            claw2.setPosition(1);
             sleep(700);
             lift.setTargetPosition(500);
             arm.setTargetPosition(200);
@@ -251,7 +252,7 @@ public class CustomImageDetection extends LinearOpMode {
             //lift.setTargetPosition(400);
             driveStraight(-300, 0.25, 500);
             //unlock dish
-            lock.setPosition(0.0);   //unlock dish
+            lock.setPosition(0.55);   //unlock dish
             imu.resetYaw();
             orientation = imu.getRobotYawPitchRollAngles();
 
@@ -314,7 +315,10 @@ public class CustomImageDetection extends LinearOpMode {
             rotate.setTargetPosition(0);
             rotate.setMode(DcMotor.RunMode.RUN_TO_POSITION);
             rotate.setPower(1);
-
+            while(Math.abs(rotate.getCurrentPosition() - 0)>2){
+                telemetry.addLine("Centering...");
+            }
+            lock.setPosition(0.4); //locked
            driveStraight(700,2, 900);
             runtime.reset();
             while (runtime.seconds()<1.5)
@@ -322,8 +326,8 @@ public class CustomImageDetection extends LinearOpMode {
                 holdLift(900);
                 if(lift.getCurrentPosition()>750)
                 {
-                    claw.setPosition(0.47);
-                    claw2.setPosition(0.65);
+                    claw.setPosition(0.0);
+                    claw2.setPosition(1);
                 }
             }
             driveStraight(-700, 2, 1100);

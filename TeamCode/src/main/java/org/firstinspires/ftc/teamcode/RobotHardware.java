@@ -47,20 +47,20 @@ public class RobotHardware {
     // Define Motor and Servo objects  (Make them private so they can't be accessed externally)
     // Declare OpMode members for each of the 4 motors.
     private ElapsedTime runtime = new ElapsedTime();
-    private DcMotor leftFrontDrive = null;
-    private DcMotor leftBackDrive = null;
-    private DcMotor rightFrontDrive = null;
-    private DcMotor rightBackDrive = null;
-    private DcMotorEx rotate = null;
-    private DcMotor arm = null;
-    private DcMotor lift = null;
-    private AnalogInput liftPosition = null;
-    private RevTouchSensor magnet = null;
-    private PIDController liftPID =null, rotatePID=null;
-    private Servo wrist = null, claw = null, flipHand = null, lock = null, claw2 = null;
-    private Servo ser5 = null;
-    private TouchSensor armLong;
-    private TouchSensor armShort;
+    public DcMotor leftFrontDrive = null;
+    public DcMotor leftBackDrive = null;
+    public DcMotor rightFrontDrive = null;
+    public DcMotor rightBackDrive = null;
+    public DcMotorEx rotate = null;
+    public DcMotor arm = null;
+    public DcMotor lift = null;
+    public AnalogInput liftPosition = null;
+    public RevTouchSensor magnet = null;
+    public PIDController liftPID =null, rotatePID=null;
+    public Servo wrist = null, claw = null, flipHand = null, lock = null, claw2 = null;
+    public Servo ser5 = null;
+    public TouchSensor armLong;
+    public TouchSensor armShort;
     // Define Drive constants.  Make them public so they CAN be used by the calling OpMode
 
     // Define a constructor that allows the OpMode to pass a reference to itself.

@@ -129,12 +129,6 @@ public class BasicOmniOpMode_Linear extends LinearOpMode {
 
         // run until the end of the match (driver presses STOP)
         while (opModeIsActive()) {
-            if(gamepad2.x){
-                lock.setPosition(1);
-            }
-            if(gamepad2.y){
-                lock.setPosition(0);
-            }
 
             if(gamepad1.a)
             {
@@ -148,12 +142,12 @@ public class BasicOmniOpMode_Linear extends LinearOpMode {
             }
             if(gamepad1.x)
             {
-                claw.setPosition(1.0);
-               claw2.setPosition(0.0); //working
+                claw.setPosition(0.5);
+                claw2.setPosition(0.0); //working
             }
             if(gamepad1.y){
-                claw.setPosition(0.47);
-                claw2.setPosition(0.65);
+                claw.setPosition(0.0);
+                claw2.setPosition(1);
             }
                 //flipHand.setPosition(0.405);
             if(gamepad1.right_bumper)
@@ -271,30 +265,29 @@ public class BasicOmniOpMode_Linear extends LinearOpMode {
     }
     public void rotateControl(){
         double power = 0.7;
+        if(gamepad2.right_bumper){
+            rotatePID.rest= 0;
+            rotatePID.input = rotate.getCurrentPosition();
+            rotatePID.calculate();
+            rotate.setPower(rotatePID.output*3);
+            if(Math.abs(rotate.getCurrentPosition())<5)
+                lock.setPosition(0.4);
+        }
         if(gamepad1.right_stick_x!=0)
         {
             rotate.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-            lock.setPosition(0);
+            lock.setPosition(0.55); //lock open
             rotate.setPower(gamepad1.right_stick_x);
             rotateHoldPosition = rotate.getCurrentPosition();
         }
-//        else if (gamepad1.left_stick_x>0) {
-//            {
-//                rotate.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-//                lock.setPosition(0);
-//                sleep(100);
-//                rotate.setPower(-power);
-//                rotateHoldPosition = rotate.getCurrentPosition();
-//            }
-//        }
         else {
             if(rotateHoldPosition!=0){
             rotatePID.rest= rotateHoldPosition;
             rotatePID.input = rotate.getCurrentPosition();
             rotatePID.calculate();
             rotate.setPower(rotatePID.output);
-            if(Math.abs(rotateHoldPosition-rotate.getCurrentPosition())<23)
-                lock.setPosition(1);//lock tight!
+            if(Math.abs(0-rotate.getCurrentPosition())<50)
+                lock.setPosition(0.4);//lock tight!
             }
         }
     }
