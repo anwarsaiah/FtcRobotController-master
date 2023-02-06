@@ -35,44 +35,13 @@ import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.AnalogInput;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
-import com.qualcomm.robotcore.hardware.DigitalChannel;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.hardware.TouchSensor;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
-/**
- * This file contains an example of a Linear "OpMode".
- * An OpMode is a 'program' that runs in either the autonomous or the teleop period of an FTC match.
- * The names of OpModes appear on the menu of the FTC Driver Station.
- * When a selection is made from the menu, the corresponding OpMode is executed.
- *
- * This particular OpMode illustrates driving a 4-motor Omni-Directional (or Holonomic) robot.
- * This code will work with either a Mecanum-Drive or an X-Drive train.
- * Both of these drives are illustrated at https://gm0.org/en/latest/docs/robot-design/drivetrains/holonomic.html
- * Note that a Mecanum drive must display an X roller-pattern when viewed from above.
- *
- * Also note that it is critical to set the correct rotation direction for each motor.  See details below.
- *
- * Holonomic drives provide the ability for the robot to move in three axes (directions) simultaneously.
- * Each motion axis is controlled by one Joystick axis.
- *
- * 1) Axial:    Driving forward and backward               Left-joystick Forward/Backward
- * 2) Lateral:  Strafing right and left                     Left-joystick Right and Left
- * 3) Yaw:      Rotating Clockwise and counter clockwise    Right-joystick Right and Left
- *
- * This code is written assuming that the right-side motors need to be reversed for the robot to drive forward.
- * When you first test your robot, if it moves backward when you push the left stick forward, then you must flip
- * the direction of all 4 motors (see code below).
- *
- * Use Android Studio to Copy this Class, and Paste it into your team's code folder with a new name.
- * Remove or comment out the @Disabled line to add this opmode to the Driver Station OpMode list
- */
-
 @TeleOp(name="Basic: Omni Linear OpMode", group="Linear Opmode")
 //@Disabled
 public class BasicOmniOpMode_Linear extends LinearOpMode {
-
-    // Declare OpMode members for each of the 4 motors.
     private ElapsedTime runtime = new ElapsedTime();
     private DcMotor leftFrontDrive = null;
     private DcMotor leftBackDrive = null;
@@ -83,12 +52,15 @@ public class BasicOmniOpMode_Linear extends LinearOpMode {
     private DcMotor lift = null;
     private AnalogInput liftPosition = null;
     private RevTouchSensor magnet = null;
-    private PIDController pid =null, rotatePID=null;
-    private Servo grab = null, wrist = null;
-    private TouchSensor armShort;
+    private PIDController liftPID =null, rotatePID=null;
+    private Servo wrist = null, claw = null, flipHand = null, lock = null, claw2 = null;
+    private Servo ser5 = null;
     private TouchSensor armLong;
+    private TouchSensor armShort;
     double liftHoldPosition = 1.0;//0.989;
     int rotateHoldPosition = 0;
+    int armPosition, liftEncoder;
+    boolean longArm = false, shortArm = false, armReset = false;
 
     @Override
     public void runOpMode() {
@@ -104,12 +76,19 @@ public class BasicOmniOpMode_Linear extends LinearOpMode {
         lift = hardwareMap.get(DcMotor.class,"lift");
         liftPosition = hardwareMap.get(AnalogInput.class,"liftPosition");
         magnet = hardwareMap.get(RevTouchSensor.class, "magnet");
-        grab = hardwareMap.get(Servo.class,"ser1");
-        wrist = hardwareMap.get(Servo.class,"ser2");
+        wrist = hardwareMap.get(Servo.class,"wrist");
+        claw = hardwareMap.get(Servo.class,"claw");
+        lock = hardwareMap.get(Servo.class, "lock");
+        flipHand = hardwareMap.get(Servo.class, "flip");
+        claw2 = hardwareMap.get(Servo.class, "claw2");
+
+        ser5 = hardwareMap.get(Servo.class, "ser5");
+
         armShort = hardwareMap.get(TouchSensor.class,"armShort");
         armLong = hardwareMap.get(TouchSensor.class,"armLong");
-        pid = new PIDController(3, 0, 0);
-        rotatePID = new PIDController(0.05, 0.0, 0.01);
+        liftPID = new PIDController(5, 0, 0.05);
+        rotatePID = new PIDController(0.035, 0.0, 0.002);
+
 
         // ########################################################################################
         // !!!            IMPORTANT Drive Information. Test your motor directions.            !!!!!
@@ -128,54 +107,90 @@ public class BasicOmniOpMode_Linear extends LinearOpMode {
         rotate.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         // Wait for the game to start (driver presses PLAY)
         telemetry.addData("Status", "Initialized");
+
         telemetry.update();
+        resetArm();
         ///////////////////////////
         waitForStart();
         //////////////////////////
-        wrist.setPosition(0);
-        grab.setPosition(0.5);
+        //claw.setPosition(0.0);
+        //claw2.setPosition(1.0);
+        //flipHand.setPosition(0.52);  //start --->0.403 end
+        //wrist.setPosition(0);
+        lift.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+
+        liftEncoder = lift.getCurrentPosition();
         runtime.reset();
-        int armPosition = arm.getCurrentPosition();
+        arm.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        arm.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        armPosition = arm.getCurrentPosition();
+        flipHand.setPosition(0.52);//flipped 0.403 --> straight 0.52
+        //wrist.setPosition(0);// 0.0 start -->0.4 end
 
         // run until the end of the match (driver presses STOP)
         while (opModeIsActive()) {
+            if(gamepad2.x){
+                lock.setPosition(1);
+            }
+            if(gamepad2.y){
+                lock.setPosition(0);
+            }
+
             if(gamepad1.a)
-                grab.setPosition(0);
+            {
+                flipHand.setPosition(0.52);
+                sleep(100);
+            }
             if(gamepad1.b)
-                grab.setPosition(0.5);
+            {
+                flipHand.setPosition(0.403);
+                sleep(100);
+            }
             if(gamepad1.x)
-                wrist.setPosition(wrist.getPosition()+0.05);
-            if(gamepad1.y)
-                wrist.setPosition(wrist.getPosition()-0.05);
+            {
+                claw.setPosition(1.0);
+               claw2.setPosition(0.0); //working
+            }
+            if(gamepad1.y){
+                claw.setPosition(0.47);
+                claw2.setPosition(0.65);
+            }
+                //flipHand.setPosition(0.405);
+            if(gamepad1.right_bumper)
+                flipHand.setPosition(0.405);
+            if(gamepad1.left_bumper)
+                flipHand.setPosition(0.52);
             ////wrist control../////////////
-            wristControl();
+            //wristControl();
             /////lift control../////////////
             liftControl();
             ////rotate control..////////////
             rotateControl();
             //////arm  control..////////////
-            if(gamepad1.right_trigger>0 || gamepad1.left_trigger>0)
-            {
-                arm.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-                 if(!armShort.isPressed()&&!armLong.isPressed())
-                       arm.setPower(gamepad1.left_trigger-gamepad1.right_trigger);
-                 else
-                       arm.setPower(0);
-                 armPosition = arm.getCurrentPosition();
-            }
-            else {
-                arm.setTargetPosition(armPosition);
-                arm.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-                arm.setPower(0.4);
-            }
+            armControl();
+//            if(gamepad1.right_trigger>0 || gamepad1.left_trigger>0)
+//            {
+//                arm.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+//                 if(!armShort.isPressed()&&!armLong.isPressed())
+//                       arm.setPower(gamepad1.left_trigger-gamepad1.right_trigger);
+//                 else
+//                       arm.setPower(0);
+//                 armPosition = arm.getCurrentPosition();
+//            }
+//            else {
+//                arm.setTargetPosition(armPosition);
+//                arm.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+//                arm.setPower(0.4);
+//            }
             ////mecanum drive ..///////////
             driveMecanum();
-            telemetry.addData("armShort", armShort.isPressed());
-            telemetry.addData("armLong", armLong.isPressed());
-            telemetry.addData("magnet", magnet.getValue());
-            telemetry.addData("lift position", liftPosition.getVoltage());
-            telemetry.addData("ser1", grab.getPosition());
-            telemetry.addData("ser2", wrist.getPosition());
+
+            telemetry.addData("Arm:",arm.getCurrentPosition());
+            telemetry.addData("lock:", lock.getPosition());
+            telemetry.addData("lift position", lift.getCurrentPosition());
+            telemetry.addData("armShort:", armShort.isPressed());
+            telemetry.addData("armLong:", armLong.isPressed());
+            telemetry.addData("Magnet:", magnet.isPressed());
             telemetry.addData("Rotate position", rotate.getCurrentPosition());
             // Show the elapsed game time and wheel power.
             telemetry.addData("Status", "Run Time: " + runtime.toString());
@@ -184,57 +199,102 @@ public class BasicOmniOpMode_Linear extends LinearOpMode {
         }
     }
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    public void wristControl(){
-        //////wrist position
-        double wristPosition = (liftPosition.getVoltage()-0.3)*0.7;
-        if(wristPosition<0)wristPosition = 0;
-        if(wristPosition>1)
-            wristPosition=1;
-        if(gamepad1.dpad_up || gamepad1.dpad_down)
-             wrist.setPosition(wristPosition);
-        //////
-    }
-
-    public void liftControl(){
-        /////lift control../////////////
-        if(gamepad1.dpad_up)
+    public void armControl(){
+        if(armLong.isPressed() || arm.getCurrentPosition() >= 800)
+            longArm = true;
+        if(armShort.isPressed() )//|| arm.getCurrentPosition() <= 1)     //Temp change arm
+            shortArm = true;
+        if(gamepad1.right_trigger>0 && !longArm)
         {
-            lift.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-            lift.setPower(0.6);
-            liftHoldPosition = liftPosition.getVoltage()+0.08;
+            shortArm = false;
+            arm.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+            arm.setPower(gamepad1.right_trigger);
+            armPosition = arm.getCurrentPosition();
         }
-
-        else if (gamepad1.dpad_down) {
-            lift.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-            lift.setPower(-0.6);
-            liftHoldPosition = liftPosition.getVoltage();
+        else if(gamepad1.left_trigger>0 && !shortArm)
+        {
+            longArm = false;
+            arm.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+            arm.setPower(-gamepad1.left_trigger);
+            armPosition = arm.getCurrentPosition();
         }
         else
         {
-            pid.rest = liftHoldPosition;
-            pid.input = liftPosition.getVoltage();
-            pid.calculate();
-            lift.setPower(pid.output);
+            arm.setTargetPosition(armPosition);
+            arm.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            arm.setPower(0.6);
+        }
+        if(shortArm || longArm){
+            arm.setTargetPosition(armPosition);
+            arm.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            arm.setPower(0.6);
+        }
+
+    }
+    /*public void wristControl(){
+        //////wrist position
+//        double wristPosition = (liftPosition.getVoltage()-0.66);
+//        if(wristPosition<0)wristPosition = 0;
+//        if(wristPosition>0.4)
+//            wristPosition=0.4;
+//        if(gamepad1.dpad_up || gamepad1.dpad_down)
+//             wrist.setPosition(wristPosition);
+        //////
+        lock.setPosition(0);
+    }*/
+
+    public void liftControl(){
+        /////lift control../////////////
+        if(-gamepad1.left_stick_y>0)
+        {
+            lift.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+            lift.setPower(-gamepad1.left_stick_y);
+            liftHoldPosition = liftPosition.getVoltage();
+            liftEncoder = lift.getCurrentPosition();
+        }
+
+        else if (-gamepad1.left_stick_y<0 && lift.getCurrentPosition()>0) {
+            lift.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+            lift.setPower(-gamepad1.left_stick_y);
+            liftHoldPosition = liftPosition.getVoltage();
+            liftEncoder = lift.getCurrentPosition();
+        }
+        else
+        {
+            liftPID.rest = liftEncoder;
+            liftPID.input = lift.getCurrentPosition();
+            liftPID.p = 0.005;
+            liftPID.d=0.0005;
+            liftPID.calculate();
+            lift.setPower(liftPID.output);
         }
     }
     public void rotateControl(){
-        if(gamepad1.dpad_left)
+        double power = 0.7;
+        if(gamepad1.right_stick_x!=0)
         {
-            rotate.setPower(0.9);
+            rotate.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+            lock.setPosition(0);
+            rotate.setPower(gamepad1.right_stick_x);
             rotateHoldPosition = rotate.getCurrentPosition();
         }
-        else if (gamepad1.dpad_right) {
-            {
-                rotate.setPower(-0.9);
-                rotateHoldPosition = rotate.getCurrentPosition();
-            }
-        }
+//        else if (gamepad1.left_stick_x>0) {
+//            {
+//                rotate.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+//                lock.setPosition(0);
+//                sleep(100);
+//                rotate.setPower(-power);
+//                rotateHoldPosition = rotate.getCurrentPosition();
+//            }
+//        }
         else {
             if(rotateHoldPosition!=0){
             rotatePID.rest= rotateHoldPosition;
             rotatePID.input = rotate.getCurrentPosition();
             rotatePID.calculate();
             rotate.setPower(rotatePID.output);
+            if(Math.abs(rotateHoldPosition-rotate.getCurrentPosition())<23)
+                lock.setPosition(1);//lock tight!
             }
         }
     }
@@ -243,9 +303,9 @@ public class BasicOmniOpMode_Linear extends LinearOpMode {
         double max;
 
         // POV Mode uses left joystick to go forward & strafe, and right joystick to rotate.
-        double axial   = -gamepad1.left_stick_y;  // Note: pushing stick forward gives negative value
-        double lateral =  gamepad1.left_stick_x;
-        double yaw     =  gamepad1.right_stick_x;
+        double axial   = -gamepad2.left_stick_y*0.8;  // Note: pushing stick forward gives negative value
+        double lateral =  gamepad2.left_stick_x*0.8;
+        double yaw     =  gamepad2.right_stick_x*0.8;
 
         // Combine the joystick requests for each axis-motion to determine each wheel's power.
         // Set up a variable for each drive wheel to save the power level for telemetry.
@@ -275,4 +335,18 @@ public class BasicOmniOpMode_Linear extends LinearOpMode {
         telemetry.addData("Front left/Right", "%4.2f, %4.2f", leftFrontPower, rightFrontPower);
         telemetry.addData("Back  left/Right", "%4.2f, %4.2f", leftBackPower, rightBackPower);
     }
+    public void resetArm(){
+        arm.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+       if(!armShort.isPressed() && !armReset)
+           arm.setPower(-0.6);
+       else
+       {
+           arm.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+           arm.setTargetPosition(0);
+           arm.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+           arm.setPower(0.8);
+           armReset = true;
+       }
+    }
+
 }
