@@ -143,7 +143,7 @@ public class CustomImageDetection extends LinearOpMode {
         armShort = hardwareMap.get(TouchSensor.class, "armShort");
         armLong = hardwareMap.get(TouchSensor.class, "armLong");
         pid = new PIDController(0.0002, 0, 0.0001);
-        rotatePID = new PIDController(0.035, 0.0, 0.002);//  0.04, 0.0, 0.0001
+        rotatePID = new PIDController(0.02, 0.0, 0.0);
         rotateRobotPID = new PIDController(0.027, 0.0, 0.0);
         anglePID = new PIDController(0.04, 0, 0.00002);
 
@@ -246,8 +246,10 @@ public class CustomImageDetection extends LinearOpMode {
             //claw2.setPosition(0.65);//grab cone
             lift.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
             lift.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+            rotate.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
             lock.setPosition(0.4);
-
+            claw.setPosition(0.0);
+            claw2.setPosition(1);
 
         }
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -259,49 +261,34 @@ public class CustomImageDetection extends LinearOpMode {
         while (opModeIsActive()) {
 
             runtime.reset();
-            lockWheels();
+//            lockWheels();
             //grab cone
-            while (runtime.seconds()<2)
-            {
-                holdLift(50);
-                if(lift.getCurrentPosition()>10)
-                {
-                    claw.setPosition(0.0);
-                    claw2.setPosition(1);
-                    break;
-                }
-            }
-
-            lift.setTargetPosition(500);
+            lift.setTargetPosition(100);
             lift.setMode(DcMotor.RunMode.RUN_TO_POSITION);
             lift.setPower(1);
-
-
-            lift.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-            lift.setPower(1);
-            //driverStraightTicks(2250, 2, 500);
-            driveStraight(0.95, 43.5, 0, 300);
-            turnToAngle(0, 0.55);
-            turnToAngle(-90, 0.8);
+            driverStraightTicks(2400, 1.5,100); //2
+            //turnToAngle(0, 0.3);
+            turnToAngle(-90, 0.6);
             //lift.setTargetPosition(400);
-            driverStraightTicks(-300, 0.25, 500);
+            driverStraightTicks(-300, 0.2,500); //0.25
+
 
             //unlock dish
 
-            imu.resetYaw();
-            orientation = imu.getRobotYawPitchRollAngles();
+            //imu.resetYaw();
+            //orientation = imu.getRobotYawPitchRollAngles();
 
-            scoreCOne();
+            scoreConeEncoder();
             getStackedCone(900);
-            scoreCOne();
+            scoreConeEncoder();
             getStackedCone(850);
-            scoreCOne();
+            scoreConeEncoder();
             getStackedCone(800);
-            scoreCOne();
+            scoreConeEncoder();
             getStackedCone(750);
-            scoreCOne();
+            scoreConeEncoder();
             getStackedCone(700);
-            scoreCOne();
+            scoreConeEncoder();
             getStackedCone(650);
 
             sleep(25000);
@@ -399,7 +386,7 @@ public class CustomImageDetection extends LinearOpMode {
     public void driverStraightTicks(int distance, double timeout, int liftPosition) {
         double power = 0.8;
 
-        imu.resetYaw();
+
         orientation = imu.getRobotYawPitchRollAngles();
 
         /////////////////    Reset Encoders     ////////////////////////
@@ -416,18 +403,52 @@ public class CustomImageDetection extends LinearOpMode {
         rightBackDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         leftFrontDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         leftBackDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        double p = 0.0;
+
         driveTime.reset();
         while (opModeIsActive() && driveTime.seconds() < timeout) {
             holdLift(liftPosition);
-            rightFrontDrive.setPower(power-orientation.getYaw(AngleUnit.DEGREES)*p);
-            rightBackDrive.setPower(power-orientation.getYaw(AngleUnit.DEGREES)*p);
-            leftFrontDrive.setPower(power+orientation.getYaw(AngleUnit.DEGREES)*p);
-            leftBackDrive.setPower(power+orientation.getYaw(AngleUnit.DEGREES)*p);
+            rightFrontDrive.setPower(power);
+            rightBackDrive.setPower(power);
+            leftFrontDrive.setPower(power);
+            leftBackDrive.setPower(power);
             telemetry.addData("Driving straigh:", rightFrontDrive.getCurrentPosition());
             telemetry.addData("Time elapsed:", driveTime.seconds());
         }
     }
+
+    public void driverStraightTicks(int distance, int liftPosition) {
+        double power = 0.8;
+
+
+        orientation = imu.getRobotYawPitchRollAngles();
+
+        /////////////////    Reset Encoders     ////////////////////////
+        leftBackDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        leftFrontDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        rightBackDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        rightFrontDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        /////////////////////////////////////////////////////////////////
+        rightFrontDrive.setTargetPosition(distance);
+        rightBackDrive.setTargetPosition(distance);
+        leftFrontDrive.setTargetPosition(distance);
+        leftBackDrive.setTargetPosition(distance);
+        rightFrontDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        rightBackDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        leftFrontDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        leftBackDrive.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+
+        driveTime.reset();
+        while (opModeIsActive() && Math.abs(rightFrontDrive.getTargetPosition() - rightFrontDrive.getCurrentPosition())>2) {
+            holdLift(liftPosition);
+            rightFrontDrive.setPower(power);
+            rightBackDrive.setPower(power);
+            leftFrontDrive.setPower(power);
+            leftBackDrive.setPower(power);
+            telemetry.addData("Driving straigh:", rightFrontDrive.getCurrentPosition());
+            telemetry.addData("Time elapsed:", driveTime.seconds());
+        }
+    }
+
 
     public void turnToAngle(int angle, double timeout) {
         orientation = imu.getRobotYawPitchRollAngles();
@@ -495,23 +516,23 @@ public class CustomImageDetection extends LinearOpMode {
         int CONE_DROP_LIFT_POSITION = 3300;
         rotate.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         runtime.reset();
-        while (runtime.seconds() < 2.5) {
+        while (runtime.seconds() < 1.5) {
             holdLift(CONE_DROP_LIFT_POSITION);
             //if(lift.getCurrentPosition()>500)
             //flipHand.setPosition(FLIPPED);
             if (lift.getCurrentPosition() > CONE_DROP_LIFT_POSITION-800) {
                 orientation = imu.getRobotYawPitchRollAngles();
-                rotatePID.rest = 100;
+                rotatePID.rest = 25;
                 rotatePID.input = orientation.getYaw(AngleUnit.DEGREES);
                 rotatePID.calculate();
-                rotate.setPower(rotatePID.output);
+                rotate.setPower(rotatePID.output*3);
                 telemetry.addData("Current angle", orientation.getYaw(AngleUnit.DEGREES));
                 telemetry.addData("lift", lift.getCurrentPosition());
                 telemetry.update();
             }
             //stretch arm
             if (lift.getCurrentPosition() > CONE_DROP_LIFT_POSITION - 1500) {
-                arm.setTargetPosition(400);
+                arm.setTargetPosition(250);
                 arm.setMode(DcMotor.RunMode.RUN_TO_POSITION);
                 arm.setPower(0.6);
             }
@@ -522,7 +543,7 @@ public class CustomImageDetection extends LinearOpMode {
         ////////  *End of simultaneous code* //////////////////
         driveTime.reset();
         //drop cone
-        while (driveTime.seconds() < 2) {
+        while (driveTime.seconds() < 0.5) {
             holdLift(CONE_DROP_LIFT_POSITION - 250);
             if (lift.getCurrentPosition()<CONE_DROP_LIFT_POSITION-200) {
                 claw.setPosition(0.65);//drop cone
@@ -537,12 +558,13 @@ public class CustomImageDetection extends LinearOpMode {
         while (lift.getCurrentPosition() > 800) {
             holdLift(800);
             orientation = imu.getRobotYawPitchRollAngles();
-            rotatePID.rest = 0;
+            rotatePID.rest = -90;
             rotatePID.input = orientation.getYaw(AngleUnit.DEGREES);
             rotatePID.calculate();
-            rotate.setPower(rotatePID.output);
+            rotate.setPower(rotatePID.output*3);
             telemetry.addData("Current angle", orientation.getYaw(AngleUnit.DEGREES));
             telemetry.addData("lift", lift.getCurrentPosition());
+            telemetry.addData("rotate", rotate.getCurrentPosition());
             telemetry.update();
         }
         rotate.setTargetPosition(0);
@@ -553,8 +575,45 @@ public class CustomImageDetection extends LinearOpMode {
             holdLift(800);
         }
         lock.setPosition(0.4); //locked
-        turnToAngle(0,1);
+        //turnToAngle(0,1);
         holdLift(800,1);
+
+    }
+
+    public void scoreConeEncoder()
+    {
+        int CONE_DROP_LIFT_POSITION = 3300;
+
+        lockWheels();
+        lock.setPosition(0.55);   //unlock dish
+
+
+        rotate.setTargetPosition(2600);
+        rotate.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        rotate.setPower(1);
+        while (rotate.getCurrentPosition()<2600){
+            holdLift(CONE_DROP_LIFT_POSITION);
+        }
+        while (lift.getCurrentPosition()>CONE_DROP_LIFT_POSITION-250){
+            holdLift(CONE_DROP_LIFT_POSITION-250);
+            if(lift.getCurrentPosition()<CONE_DROP_LIFT_POSITION-200)
+            {
+            claw.setPosition(0.65);//drop cone
+            claw2.setPosition(0.3);
+            }
+        }
+        while (lift.getCurrentPosition() < CONE_DROP_LIFT_POSITION){
+            holdLift(CONE_DROP_LIFT_POSITION);
+        }
+        rotate.setTargetPosition(0);
+
+        while (rotate.getCurrentPosition()>0){
+            if(rotate.getCurrentPosition() <2000)
+                holdLift(1000);
+        }
+
+        lock.setPosition(0.4); //locked
+        sleep(50);
 
     }
 
@@ -579,20 +638,22 @@ public class CustomImageDetection extends LinearOpMode {
     //scoreCone() //////////////////////////////////////////////////////////////////
 
     public void getStackedCone(int liftHeight){
-        driveStraight(0.6, 16, 0.0, liftHeight);
+        turnToAngle(-90,0.25);
+        driverStraightTicks(1000,0.8,  liftHeight); //0.65
         runtime.reset();
-        while (runtime.seconds()<1.5)
+        while (runtime.seconds()<1)
         {
+            telemetry.addData("Angle", orientation.getYaw(AngleUnit.DEGREES));
             holdLift(liftHeight);
-            arm.setTargetPosition(1000);
-            if(lift.getCurrentPosition()>liftHeight-5)
+            arm.setTargetPosition(600);
+            if(arm.getCurrentPosition()>850)
             {
                 claw.setPosition(0.0);
-                claw2.setPosition(1);
+                claw2.setPosition(0.5);
             }
         }
         //driverStraightTicks(-900, 2, liftHeight+50);
-        driveStraight(0.6, -16, 0.0, liftHeight);
+        driverStraightTicks(-1000,0.8, liftHeight);//0.65
     }
     ///////////////////////////////////////////////////////////////////////////////////////
     /// Gyro Based Auto Drive//////////////

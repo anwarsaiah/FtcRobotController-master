@@ -87,7 +87,7 @@ public class BasicOmniOpMode_Linear extends LinearOpMode {
         armShort = hardwareMap.get(TouchSensor.class,"armShort");
         armLong = hardwareMap.get(TouchSensor.class,"armLong");
         liftPID = new PIDController(5, 0, 0.05);
-        rotatePID = new PIDController(0.035, 0.0, 0.002);
+        rotatePID = new PIDController(0.02, 0.0, 0.001);
 
 
         // ########################################################################################
