@@ -39,7 +39,7 @@ import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.hardware.TouchSensor;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
-@TeleOp(name="Basic: Omni Linear OpMode", group="Linear Opmode")
+@TeleOp(name="Basic: FTC", group="Linear Opmode")
 //@Disabled
 public class BasicOmniOpMode_Linear extends LinearOpMode {
     private ElapsedTime runtime = new ElapsedTime();
@@ -64,7 +64,6 @@ public class BasicOmniOpMode_Linear extends LinearOpMode {
 
     @Override
     public void runOpMode() {
-
         // Initialize the hardware variables. Note that the strings used here must correspond
         // to the names assigned during the robot configuration step on the DS or RC devices.
         leftFrontDrive  = hardwareMap.get(DcMotor.class, "exM0");
@@ -81,14 +80,11 @@ public class BasicOmniOpMode_Linear extends LinearOpMode {
         lock = hardwareMap.get(Servo.class, "lock");
         flipHand = hardwareMap.get(Servo.class, "flip");
         claw2 = hardwareMap.get(Servo.class, "claw2");
-
         ser5 = hardwareMap.get(Servo.class, "ser5");
-
         armShort = hardwareMap.get(TouchSensor.class,"armShort");
         armLong = hardwareMap.get(TouchSensor.class,"armLong");
         liftPID = new PIDController(5, 0, 0.05);
         rotatePID = new PIDController(0.02, 0.0, 0.001);
-
 
         // ########################################################################################
         // !!!            IMPORTANT Drive Information. Test your motor directions.            !!!!!
@@ -107,19 +103,15 @@ public class BasicOmniOpMode_Linear extends LinearOpMode {
         rotate.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         // Wait for the game to start (driver presses PLAY)
         telemetry.addData("Status", "Initialized");
-
         telemetry.update();
         resetArm();
         ///////////////////////////
         waitForStart();
         //////////////////////////
-        //claw.setPosition(0.0);
-        //claw2.setPosition(1.0);
-        //flipHand.setPosition(0.52);  //start --->0.403 end
-        //wrist.setPosition(0);
+
         lift.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
 
-        liftEncoder = lift.getCurrentPosition();
+        liftEncoder = 570;//lift.getCurrentPosition();
         runtime.reset();
         arm.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         arm.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
@@ -194,7 +186,7 @@ public class BasicOmniOpMode_Linear extends LinearOpMode {
     }
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     public void armControl(){
-        if(armLong.isPressed() || arm.getCurrentPosition() >= 800)
+        if(armLong.isPressed() || arm.getCurrentPosition() >= 700)
             longArm = true;
         if(armShort.isPressed() )//|| arm.getCurrentPosition() <= 1)     //Temp change arm
             shortArm = true;
@@ -239,6 +231,7 @@ public class BasicOmniOpMode_Linear extends LinearOpMode {
 
     public void liftControl(){
         /////lift control../////////////
+        final int MIN_POSITION = 600;
         if(-gamepad1.left_stick_y>0)
         {
             lift.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
@@ -247,7 +240,7 @@ public class BasicOmniOpMode_Linear extends LinearOpMode {
             liftEncoder = lift.getCurrentPosition();
         }
 
-        else if (-gamepad1.left_stick_y<0 && lift.getCurrentPosition()>0) {
+        else if (-gamepad1.left_stick_y<0 && lift.getCurrentPosition()>MIN_POSITION) {
             lift.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
             lift.setPower(-gamepad1.left_stick_y);
             liftHoldPosition = liftPosition.getVoltage();
@@ -256,6 +249,8 @@ public class BasicOmniOpMode_Linear extends LinearOpMode {
         else
         {
             liftPID.rest = liftEncoder;
+            if(liftPID.rest <MIN_POSITION)
+                liftPID.rest = MIN_POSITION;
             liftPID.input = lift.getCurrentPosition();
             liftPID.p = 0.005;
             liftPID.d=0.0005;
