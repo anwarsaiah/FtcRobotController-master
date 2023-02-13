@@ -627,7 +627,7 @@ public class ParkingRed2 extends LinearOpMode {
         int CONE_DROP_LIFT_POSITION = 3300;
         rotate.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         runtime.reset();
-        while (runtime.seconds() < 1.5) {
+        while (runtime.seconds() < 1.5&& opModeIsActive()) {
             holdLift(CONE_DROP_LIFT_POSITION);
             //if(lift.getCurrentPosition()>500)
             //flipHand.setPosition(FLIPPED);
@@ -654,7 +654,7 @@ public class ParkingRed2 extends LinearOpMode {
         ////////  *End of simultaneous code* //////////////////
         driveTime.reset();
         //drop cone
-        while (driveTime.seconds() < 0.5) {
+        while (driveTime.seconds() < 0.5&& opModeIsActive()) {
             holdLift(CONE_DROP_LIFT_POSITION - 250);
             if (lift.getCurrentPosition()<CONE_DROP_LIFT_POSITION-200) {
                 claw.setPosition(0.65);//drop cone
@@ -663,10 +663,10 @@ public class ParkingRed2 extends LinearOpMode {
 
         }
 
-        while (Math.abs(lift.getCurrentPosition() - CONE_DROP_LIFT_POSITION) > 10) {
+        while (Math.abs(lift.getCurrentPosition() - CONE_DROP_LIFT_POSITION) > 10&& opModeIsActive()) {
             holdLift(CONE_DROP_LIFT_POSITION);
         }
-        while (lift.getCurrentPosition() > 800) {
+        while (lift.getCurrentPosition() > 800&& opModeIsActive()) {
             holdLift(800);
             orientation = imu.getRobotYawPitchRollAngles();
             rotatePID.rest = -90;
@@ -681,7 +681,7 @@ public class ParkingRed2 extends LinearOpMode {
         rotate.setTargetPosition(0);
         rotate.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         rotate.setPower(1);
-        while(Math.abs(rotate.getCurrentPosition() - 0)>2){
+        while(Math.abs(rotate.getCurrentPosition() - 0)>2&& opModeIsActive()){
             telemetry.addLine("Centering...");
             holdLift(800);
         }
@@ -704,12 +704,12 @@ public class ParkingRed2 extends LinearOpMode {
 //        rotate.setPower(1);
 
 
-        while(lift.getCurrentPosition()<CONE_DROP_LIFT_POSITION-2)
+        while(lift.getCurrentPosition()<CONE_DROP_LIFT_POSITION-2&& opModeIsActive())
         {
             holdLift(CONE_DROP_LIFT_POSITION);
         }
 
-        while (lift.getCurrentPosition()>CONE_DROP_LIFT_POSITION-40){
+        while (lift.getCurrentPosition()>CONE_DROP_LIFT_POSITION-40&& opModeIsActive()){
             holdLift(CONE_DROP_LIFT_POSITION-40);
             if(lift.getCurrentPosition()<CONE_DROP_LIFT_POSITION-30)
             {
@@ -719,12 +719,12 @@ public class ParkingRed2 extends LinearOpMode {
             }
 
         }
-        while (lift.getCurrentPosition() < CONE_DROP_LIFT_POSITION){
+        while (lift.getCurrentPosition() < CONE_DROP_LIFT_POSITION&& opModeIsActive()){
             holdLift(CONE_DROP_LIFT_POSITION);
         }
 
         arm.setTargetPosition(0);
-        while (lift.getCurrentPosition()<2700){
+        while (lift.getCurrentPosition()<2700&& opModeIsActive()){
             holdLift(2700);
         }
 //        lock.setPosition(0.4); //locked
@@ -754,7 +754,7 @@ public class ParkingRed2 extends LinearOpMode {
 
         driverStraightTicks(800,0.8,  liftHeight); //0.65
         runtime.reset();
-        while (runtime.seconds()<0.65)
+        while (runtime.seconds()<0.65&& opModeIsActive())
         {
             telemetry.addData("Angle", orientation.getYaw(AngleUnit.DEGREES));
             holdLift(liftHeight);
@@ -767,9 +767,9 @@ public class ParkingRed2 extends LinearOpMode {
         }
         arm.setTargetPosition(88);
         sleep(100);
-        while (lift.getCurrentPosition()<liftHeight+200)
+        while (lift.getCurrentPosition()<liftHeight+200&& opModeIsActive())
             holdLift(liftHeight+200);
-        while (lift.getCurrentPosition()<liftHeight+400)
+        while (lift.getCurrentPosition()<liftHeight+400&& opModeIsActive())
             holdLift(liftHeight+400);
         //driverStraightTicks(-900, 2, liftHeight+50);
 

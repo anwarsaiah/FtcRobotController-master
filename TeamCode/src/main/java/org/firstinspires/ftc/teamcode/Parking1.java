@@ -624,7 +624,7 @@ sleep(30000);
         int CONE_DROP_LIFT_POSITION = 3300;
         rotate.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         runtime.reset();
-        while (runtime.seconds() < 1.5) {
+        while (runtime.seconds() < 1.5 && opModeIsActive()) {
             holdLift(CONE_DROP_LIFT_POSITION);
             //if(lift.getCurrentPosition()>500)
             //flipHand.setPosition(FLIPPED);
@@ -651,7 +651,7 @@ sleep(30000);
         ////////  *End of simultaneous code* //////////////////
         driveTime.reset();
         //drop cone
-        while (driveTime.seconds() < 0.5) {
+        while (driveTime.seconds() < 0.5 && opModeIsActive()) {
             holdLift(CONE_DROP_LIFT_POSITION - 250);
             if (lift.getCurrentPosition()<CONE_DROP_LIFT_POSITION-200) {
                 claw.setPosition(0.65);//drop cone
@@ -660,10 +660,10 @@ sleep(30000);
 
         }
 
-        while (Math.abs(lift.getCurrentPosition() - CONE_DROP_LIFT_POSITION) > 10) {
+        while (Math.abs(lift.getCurrentPosition() - CONE_DROP_LIFT_POSITION) > 10&& opModeIsActive()) {
             holdLift(CONE_DROP_LIFT_POSITION);
         }
-        while (lift.getCurrentPosition() > 800) {
+        while (lift.getCurrentPosition() > 800&& opModeIsActive()) {
             holdLift(800);
             orientation = imu.getRobotYawPitchRollAngles();
             rotatePID.rest = -90;
@@ -678,7 +678,7 @@ sleep(30000);
         rotate.setTargetPosition(0);
         rotate.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         rotate.setPower(1);
-        while(Math.abs(rotate.getCurrentPosition() - 0)>2){
+        while(Math.abs(rotate.getCurrentPosition() - 0)>2&& opModeIsActive()){
             telemetry.addLine("Centering...");
             holdLift(800);
         }
@@ -701,14 +701,14 @@ sleep(30000);
 //        rotate.setPower(1);
 
 
-        while(lift.getCurrentPosition()<CONE_DROP_LIFT_POSITION-2)
+        while(lift.getCurrentPosition()<CONE_DROP_LIFT_POSITION-2&& opModeIsActive())
         {
             holdLift(CONE_DROP_LIFT_POSITION);
         }
 
-        while (lift.getCurrentPosition()>CONE_DROP_LIFT_POSITION-40){
+        while (lift.getCurrentPosition()>CONE_DROP_LIFT_POSITION-40&& opModeIsActive()){
             holdLift(CONE_DROP_LIFT_POSITION-40);
-            if(lift.getCurrentPosition()<CONE_DROP_LIFT_POSITION-30)
+            if(lift.getCurrentPosition()<CONE_DROP_LIFT_POSITION-30&& opModeIsActive())
             {
                 claw.setPosition(0.5);//drop cone
                 claw2.setPosition(0.0);
@@ -716,12 +716,12 @@ sleep(30000);
             }
 
         }
-        while (lift.getCurrentPosition() < CONE_DROP_LIFT_POSITION){
+        while (lift.getCurrentPosition() < CONE_DROP_LIFT_POSITION&& opModeIsActive()){
             holdLift(CONE_DROP_LIFT_POSITION);
         }
 
         arm.setTargetPosition(0);
-        while (lift.getCurrentPosition()<2700){
+        while (lift.getCurrentPosition()<2700&& opModeIsActive()){
             holdLift(2700);
         }
 //        lock.setPosition(0.4); //locked
@@ -751,7 +751,7 @@ sleep(30000);
 
         driverStraightTicks(800,0.8,  liftHeight); //0.65
         runtime.reset();
-        while (runtime.seconds()<0.65)
+        while (runtime.seconds()<0.65&& opModeIsActive())
         {
             telemetry.addData("Angle", orientation.getYaw(AngleUnit.DEGREES));
             holdLift(liftHeight);
@@ -764,9 +764,9 @@ sleep(30000);
         }
         arm.setTargetPosition(88);
         sleep(100);
-        while (lift.getCurrentPosition()<liftHeight+200)
+        while (lift.getCurrentPosition()<liftHeight+200&& opModeIsActive())
             holdLift(liftHeight+200);
-        while (lift.getCurrentPosition()<liftHeight+400)
+        while (lift.getCurrentPosition()<liftHeight+400&& opModeIsActive())
             holdLift(liftHeight+400);
         //driverStraightTicks(-900, 2, liftHeight+50);
 
@@ -793,17 +793,5 @@ sleep(30000);
         }
     }
 
-    public  class ftcRunnable implements  Runnable{
-        LinearOpMode opMode;
-        double value;
-        public ftcRunnable(LinearOpMode opMode, double value){
-            this.opMode = opMode;
-            this.value = value;
-        }
-        public void run(){
-            opMode.telemetry.addData("Angle", value);
-            opMode.telemetry.update();
-        }
-    }
 
 }

@@ -53,8 +53,8 @@ import org.openftc.easyopencv.OpenCvCameraRotation;
 
 import java.util.ArrayList;
 
-@Autonomous(name="Parking 1 Cone Medium Right ", group="Robot")
-public class Parking1ConeMediumRight extends LinearOpMode {
+@Autonomous(name="Parking 3 Cones Right ", group="Robot")
+public class Parking3Right extends LinearOpMode {
 
     private double  targetHeading = 0;
     private double  driveSpeed    = 0;
@@ -272,26 +272,66 @@ public class Parking1ConeMediumRight extends LinearOpMode {
             simpleDrive(1350);//2380 lift
             sleep(500);
 
-            turnToAngle(45, 2, 2380);
+            turnToAngle(45, 1, 2380);
             sleep(500);
 
             dropCone();
 
-            turnToAngle(0, 2, 2400);
-            setLiftHeight(100);
-            simpleDrive(900);//400
-            sleep(1000);
+            turnToAngle(0, 1, 2400);
+//            setLiftHeight(2000);
+//            sleep(100);
+//            setLiftHeight(750);
+            simpleDrive(1050);//400
+            sleep(500);
+            turnToAngle(-90,1,850);
+            sleep(200);
+            simpleDrive(730);
+            sleep(500);
+            claw.setPosition(0.0); //close claws
+            claw2.setPosition(0.8);
+            sleep(500);
+            setLiftHeight(1800);
+            simpleDrive(-730);
+            setLiftHeight(1800);
+            turnToAngle(-135,1,1950);
+            dropCone();
+            setLiftHeight(900);
+            turnToAngle(-90,1,760);
+            simpleDrive(730);
+            claw.setPosition(0.0); //close claws
+            claw2.setPosition(0.8);
+            sleep(300);
+
+            setLiftHeight(1200);
+            sleep(200);
+            simpleDrive(-730);
+
+            turnToAngle(45, 1,3200);
+            arm.setTargetPosition(850);
+            arm.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            arm.setPower(0.6);
+            simpleDrive(400);
+            dropCone();
+            sleep(400);
+
+
+            setLiftHeight(4000);
+            sleep(200);
+            simpleDrive(-400);
+            arm.setTargetPosition(1);
+
+            turnToAngle(0,1,0);
 
             if(tagOfInterest != null)
             {
                 if (tagOfInterest.id == 13)
                 {
-                    turnToAngle(-90, 2,0);
+                    turnToAngle(-90, 1,0);
                     sleep(1000);
                     driverStraightTicks(1400, 30);
                 } else if (tagOfInterest.id == 11)
                 {
-                    turnToAngle(90, 2,0);
+                    turnToAngle(90, 1,0);
                     sleep(1000);
                     driverStraightTicks(1100, 30);
                 }
@@ -507,7 +547,7 @@ public class Parking1ConeMediumRight extends LinearOpMode {
             orientation = imu.getRobotYawPitchRollAngles();
             double diversion = orientation.getYaw(AngleUnit.DEGREES);
             if(Math.abs(startAngle-diversion)>1.2)
-              diversion *=0.05;
+                diversion *=0.05;
             else
                 diversion = 0;
 
@@ -572,28 +612,29 @@ public class Parking1ConeMediumRight extends LinearOpMode {
         lockWheels();
     }
 
-public void  simpleDrive(int distance){
+    public void  simpleDrive(int distance){
         rightFrontDrive.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        double power = 0.25;
+
+        double power = distance>0 ? 0.25 : -0.25;
         leftFrontDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         rightFrontDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-    rightBackDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-    leftBackDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-    while (opModeIsActive() && Math.abs(rightFrontDrive.getCurrentPosition()-distance)>5){
-        leftFrontDrive.setPower(power);
-        rightFrontDrive.setPower(power);
-        rightBackDrive.setPower(power);
-        leftBackDrive.setPower(power);
-        telemetry.addData("distance", rightFrontDrive.getCurrentPosition());
-        telemetry.update();
+        rightBackDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        leftBackDrive.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        while (opModeIsActive() && Math.abs(rightFrontDrive.getCurrentPosition()-distance)>5){
+            leftFrontDrive.setPower(power);
+            rightFrontDrive.setPower(power);
+            rightBackDrive.setPower(power);
+            leftBackDrive.setPower(power);
+            telemetry.addData("distance", rightFrontDrive.getCurrentPosition());
+            telemetry.update();
+        }
+        lockWheels();
     }
-    lockWheels();
-}
 
-public  void setLiftHeight(int height){
-    lift.setTargetPosition(height);
-    lift.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-    lift.setPower(1);
+    public  void setLiftHeight(int height){
+        lift.setTargetPosition(height);
+        lift.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        lift.setPower(1);
 
-}
+    }
 }
